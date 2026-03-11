@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duplicate-finder"
+version = "1.0.0"
+description = "Desktop duplicate file finder with forensic-grade detection (SHA-256, SimHash + LSH)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Marc Gagnon", email = "marc@marcgagnon.ca"},
+]
+keywords = ["duplicate", "files", "finder", "dedup", "forensic", "simhash"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Desktop Environment :: File Managers",
+    "Topic :: System :: Filesystems",
+]
+dependencies = [
+    "PyQt5>=5.15",
+]
+
+[project.urls]
+Homepage = "https://github.com/lemarcgagnon/DuplicateFinder"
+
+[project.gui-scripts]
+duplicate-finder = "app:main"
+
+[tool.setuptools]
+py-modules = ["app"]

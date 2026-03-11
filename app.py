@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QMessageBox, QComboBox, QMenu, QProgressBar, QFrame,
                              QAction, QMenuBar)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont, QColor, QPainter, QPen, QBrush
 from collections import defaultdict
 
 logging.basicConfig(
@@ -418,6 +418,69 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
             return text1.lower() < text2.lower()
 
 
+class WasteDonut(QWidget):
+    """Small donut chart showing total size vs duplicate waste."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(48, 48)
+        self._total = 0
+        self._waste = 0
+        self._label = ""
+        self.setToolTip("Duplicate waste ratio")
+
+    def set_data(self, total_bytes, waste_bytes):
+        self._total = total_bytes
+        self._waste = waste_bytes
+        if total_bytes > 0:
+            pct = waste_bytes / total_bytes * 100
+            self._label = f"{pct:.0f}%"
+            self.setToolTip(
+                f"Duplicate waste: {self._fmt(waste_bytes)} / {self._fmt(total_bytes)} "
+                f"({pct:.1f}%)"
+            )
+        else:
+            self._label = ""
+            self.setToolTip("No data — run Analyze first")
+        self.update()
+
+    @staticmethod
+    def _fmt(b):
+        if b >= 1024 * 1024 * 1024:
+            return f"{b / 1024 / 1024 / 1024:.1f} GB"
+        if b >= 1024 * 1024:
+            return f"{b / 1024 / 1024:.1f} MB"
+        return f"{b / 1024:.0f} KB"
+
+    def paintEvent(self, _event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        rect = self.rect().adjusted(4, 4, -4, -4)
+
+        # Background ring
+        p.setPen(QPen(QColor("#ecf0f1"), 5))
+        p.setBrush(Qt.NoBrush)
+        p.drawEllipse(rect)
+
+        if self._total > 0:
+            # Waste arc (red/orange)
+            ratio = min(self._waste / self._total, 1.0)
+            span = int(-ratio * 360 * 16)  # negative = clockwise
+            color = QColor("#e74c3c") if ratio > 0.3 else QColor("#f39c12") if ratio > 0.1 else QColor("#27ae60")
+            p.setPen(QPen(color, 5))
+            p.drawArc(rect, 90 * 16, span)
+
+            # Center label
+            p.setPen(QPen(QColor("#2c3e50")))
+            font = p.font()
+            font.setPixelSize(10)
+            font.setBold(True)
+            p.setFont(font)
+            p.drawText(rect, Qt.AlignCenter, self._label)
+
+        p.end()
+
+
 class ForensicVisualInspector(QMainWindow):
 
     # --- Design tokens (HIG: consistent visual language) ---
@@ -672,6 +735,9 @@ class ForensicVisualInspector(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
+        self.waste_donut = WasteDonut()
+        self.status_bar.addPermanentWidget(self.waste_donut)
+
         # ============================================================
         # MENU BAR — Help (HIG: redundant access paths for key info)
         # ============================================================
@@ -754,6 +820,7 @@ class ForensicVisualInspector(QMainWindow):
         self.file_tree.clear()
         self.diff_left.clear()
         self.diff_right.clear()
+        self.waste_donut.set_data(0, 0)
         self.status_bar.showMessage("Settings changed — re-analyze to update.")
 
     def select_directory(self):
@@ -802,11 +869,26 @@ class ForensicVisualInspector(QMainWindow):
         self.folder_tree.setSortingEnabled(True)
 
         total_files = sum(s["count"] for s in stats.values())
+        total_size = sum(s["size"] for s in stats.values())
         dupe_groups = sum(1 for paths in match_map.values() if len(paths) > 1)
         dupe_files = sum(len(paths) - 1 for paths in match_map.values() if len(paths) > 1)
+
+        # Compute waste: for each dupe group, all copies except one are waste
+        waste_bytes = 0
+        for paths in match_map.values():
+            if len(paths) > 1:
+                sizes = []
+                for p in paths:
+                    rec = file_records.get(p)
+                    sizes.append(rec.size if rec else 0)
+                sizes.sort(reverse=True)
+                waste_bytes += sum(sizes[1:])  # all but the largest copy
+
+        self.waste_donut.set_data(total_size, waste_bytes)
+        waste_str = WasteDonut._fmt(waste_bytes)
         self.status_bar.showMessage(
-            f"Done: {total_files} files scanned, {dupe_groups} duplicate groups, "
-            f"{dupe_files} redundant copies."
+            f"Done: {total_files} files, {dupe_groups} duplicate groups, "
+            f"{dupe_files} redundant copies — {waste_str} wasted."
         )
 
     # --- Folder / file tree ---
@@ -1124,8 +1206,12 @@ class ForensicVisualInspector(QMainWindow):
         menu.exec_(self.file_tree.viewport().mapToGlobal(pos))
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     ex = ForensicVisualInspector()
     ex.show()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

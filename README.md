@@ -21,39 +21,41 @@ A desktop application that finds and manages duplicate files using forensic-grad
 
 ## Install
 
-### Prerequisites
+Python 3.8+ and pip are required.
 
-- Python 3.8 or later
-- pip
-
-### Steps
+### Option 1 — Install with pip (recommended)
 
 ```bash
-# Clone the repository
+pip install git+https://github.com/lemarcgagnon/DuplicateFinder.git
+```
+
+Then run from anywhere:
+
+```bash
+duplicate-finder
+```
+
+To uninstall: `pip uninstall duplicate-finder`
+
+### Option 2 — Download and run directly
+
+```bash
 git clone https://github.com/lemarcgagnon/DuplicateFinder.git
 cd DuplicateFinder
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run
 python3 app.py
 ```
 
-> **Note:** On some Linux distributions, you may need system packages for Qt:
-> ```bash
-> # Ubuntu / Debian
-> sudo apt install python3-pyqt5
->
-> # Fedora
-> sudo dnf install python3-qt5
-> ```
+### Linux note
 
-### Windows / macOS
+On some distributions, you may need system packages for Qt:
 
 ```bash
-pip install PyQt5
-python app.py
+# Ubuntu / Debian
+sudo apt install python3-pyqt5
+
+# Fedora
+sudo dnf install python3-qt5
 ```
 
 No additional system packages needed.
