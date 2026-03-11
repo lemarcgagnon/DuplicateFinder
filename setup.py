@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="dedupgenie",
-    version="1.2.1",
+    version="1.2.2",
     description="Desktop duplicate file finder with forensic-grade detection (SHA-256, SimHash + LSH)",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
