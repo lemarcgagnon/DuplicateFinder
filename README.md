@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="DedupGenie.svg" alt="DedupGenie" width="180">
+  <img src="https://raw.githubusercontent.com/lemarcgagnon/DuplicateFinder/main/DedupGenie.svg" alt="DedupGenie" width="180">
 </p>
 
 # DedupGenie
