@@ -2,7 +2,7 @@ import os
 import hashlib
 import sys
 import zlib
-import subprocess
+import subprocess  # nosec B404 — used for xdg-open/open, no shell injection
 import platform
 import difflib
 import shutil
@@ -174,17 +174,22 @@ class FileRecord:
 # --- Platform Utilities ---
 
 def open_in_file_manager(path):
-    """Open a folder in the system's native file manager."""
+    """Open a folder in the system's native file manager.
+
+    Security note (Bandit B603/B606/B607): subprocess is called with a list
+    (no shell interpolation). The path argument comes from user-selected
+    directories within the app — not from untrusted external input.
+    """
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
     system = platform.system()
     try:
         if system == "Windows":
-            os.startfile(path)
+            os.startfile(path)  # nosec B606
         elif system == "Darwin":
-            subprocess.Popen(["open", path])
+            subprocess.Popen(["open", path])  # nosec B603 B607
         else:
-            subprocess.Popen(["xdg-open", path])
+            subprocess.Popen(["xdg-open", path])  # nosec B603 B607
     except OSError as e:
         log.warning("Failed to open file manager for %s: %s", path, e)
 

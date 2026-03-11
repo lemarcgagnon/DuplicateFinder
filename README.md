@@ -33,8 +33,8 @@ A desktop application that finds and manages duplicate files using forensic-grad
 git clone https://github.com/lemarcgagnon/DuplicateFinder.git
 cd DuplicateFinder
 
-# Install the only dependency
-pip install PyQt5
+# Install dependencies
+pip install -r requirements.txt
 
 # Run
 python3 app.py
@@ -85,8 +85,9 @@ Fuzzy:
 
 ```
 DuplicateFinder/
-├── app.py          # Everything — algorithms, UI, and logic (single-file app)
-├── app.log         # Runtime warnings (created on first run)
+├── app.py              # Algorithms, UI, and logic (single-file app)
+├── requirements.txt    # Python dependencies (PyQt5)
+├── app.log             # Runtime warnings (created on first run)
 └── README.md
 ```
 
