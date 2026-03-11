@@ -90,6 +90,21 @@ DuplicateFinder/
 └── README.md
 ```
 
+## Safety & Disclaimer
+
+**Back up your data before using this tool.** Always keep a copy of important files before running any cleanup operation.
+
+Several safeguards are built in to prevent accidental data loss:
+
+- Every destructive action requires an explicit confirmation dialog.
+- Files are quarantined (moved to `_FORENSIC_QUARANTINE/`) before permanent deletion — you can review and restore them at any time.
+- The auto-clean wizard never deletes files directly; it only moves copies to quarantine.
+- No file is ever touched without user-initiated action.
+
+That said, **no software is infallible**. Depending on your operating system and configuration, deleted files may still be recoverable from your trash or recycle bin. However, this is not guaranteed.
+
+> **This software is provided "as is", without warranty of any kind, express or implied. The authors are not responsible for any data loss resulting from the use of this tool. You use it entirely at your own risk.**
+
 ## Credits
 
 Created by **Marc Gagnon** ([marcgagnon.ca](https://marcgagnon.ca)) with **Gemini** and **Claude**.

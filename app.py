@@ -714,6 +714,16 @@ class ForensicVisualInspector(QMainWindow):
             "shortest path, absence of keywords like 'copy' or 'backup', "
             "and most recent modification time as a tiebreaker. "
             "All other copies are moved to quarantine.</p>"
+            "<h3>Safety &amp; disclaimer</h3>"
+            "<p><b>Back up your data before using this tool.</b> While multiple "
+            "safeguards are in place — confirmation dialogs, quarantine step before "
+            "deletion, and no files are ever deleted without explicit user action — "
+            "no software is infallible.</p>"
+            "<p>Deleted files may still be recoverable from your operating system's "
+            "trash/recycle bin depending on your platform and configuration.</p>"
+            "<p>This software is provided as-is, without warranty of any kind. "
+            "The authors are not liable for any data loss. "
+            "<b>You use this tool entirely at your own risk.</b></p>"
         ))
 
     def show_about(self):
