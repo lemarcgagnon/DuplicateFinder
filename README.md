@@ -86,8 +86,10 @@ Fuzzy:
 ## Project structure
 
 ```
-DuplicateFinder/
+DedupGenie/
 ├── app.py              # Algorithms, UI, and logic (single-file app)
+├── pyproject.toml      # Package metadata (pip install)
+├── setup.py            # Fallback for older pip
 ├── requirements.txt    # Python dependencies (PyQt5)
 ├── app.log             # Runtime warnings (created on first run)
 └── README.md

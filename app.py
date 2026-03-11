@@ -534,7 +534,7 @@ class ForensicVisualInspector(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Genies Forensic Inspector")
+        self.setWindowTitle("DedupGenie")
         self.resize(1800, 1000)
         self.match_map = {}
         self.file_records = {}
@@ -799,11 +799,17 @@ class ForensicVisualInspector(QMainWindow):
 
     def show_about(self):
         QMessageBox.about(self, "About", (
-            "<h3>Genies Forensic Inspector</h3>"
+            "<h3>DedupGenie</h3>"
+            "<p>Version 1.0.0</p>"
             "<p>Duplicate file finder with forensic-grade detection.</p>"
             "<p>Algorithms: SHA-256, progressive head/tail pipeline, "
             "SimHash + LSH banding.</p>"
             "<p>Built with Python and PyQt5.</p>"
+            "<hr>"
+            "<p><b>Install:</b> <code>pip install dedupgenie</code><br>"
+            "<b>Run:</b> <code>dedupgenie</code><br>"
+            "<b>PyPI:</b> <a href='https://pypi.org/project/dedupgenie/'>pypi.org/project/dedupgenie</a><br>"
+            "<b>GitHub:</b> <a href='https://github.com/lemarcgagnon/DuplicateFinder'>github.com/lemarcgagnon/DuplicateFinder</a></p>"
             "<hr>"
             "<p>Created by <b>Marc Gagnon</b> "
             "(<a href='https://marcgagnon.ca'>marcgagnon.ca</a>)<br>"
