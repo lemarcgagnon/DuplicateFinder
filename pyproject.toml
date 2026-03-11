@@ -34,4 +34,4 @@ Homepage = "https://github.com/lemarcgagnon/DuplicateFinder"
 dedupgenie = "app:main"
 
 [tool.setuptools]
-py-modules = ["app"]
+py-modules = ["app", "translations"]

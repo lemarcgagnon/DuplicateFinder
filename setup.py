@@ -10,7 +10,7 @@ setup(
     author_email="marc@marcgagnon.ca",
     url="https://github.com/lemarcgagnon/DuplicateFinder",
     license="MIT",
-    py_modules=["app"],
+    py_modules=["app", "translations"],
     python_requires=">=3.8",
     install_requires=["PyQt5>=5.15"],
     entry_points={

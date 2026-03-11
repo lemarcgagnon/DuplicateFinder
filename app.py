@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QColor, QPainter, QPen, QBrush
 from collections import defaultdict
+from translations import LANGUAGES, RTL_LANGUAGES, get_translator
 
 logging.basicConfig(
     filename="app.log", level=logging.WARNING,
@@ -534,7 +535,9 @@ class ForensicVisualInspector(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("DedupGenie")
+        self._lang = "en"
+        self.tr_fn = get_translator(self._lang)
+        self.setWindowTitle(self.tr_fn("window_title"))
         self.resize(1800, 1000)
         self.match_map = {}
         self.file_records = {}
@@ -542,64 +545,61 @@ class ForensicVisualInspector(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
+        t = self.tr_fn
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
         layout.setSpacing(6)
 
         # ============================================================
-        # ROW 1 — Target selection (HIG: primary navigation, top)
+        # ROW 1 — Target selection
         # ============================================================
         target_row = QHBoxLayout()
         target_row.setSpacing(6)
 
-        target_label = QLabel("Target:")
-        target_label.setStyleSheet("font-weight: bold;")
-        target_row.addWidget(target_label)
+        self._target_label = QLabel(t("label_target"))
+        self._target_label.setStyleSheet("font-weight: bold;")
+        target_row.addWidget(self._target_label)
 
         self.path_input = QLineEdit(os.path.abspath(".."))
         self.path_input.setStyleSheet("padding: 6px; font-size: 13px;")
-        self.path_input.setPlaceholderText("Select a directory to scan...")
+        self.path_input.setPlaceholderText(t("placeholder_select_directory"))
         self.path_input.textChanged.connect(self.clear_all_data)
-        target_row.addWidget(self.path_input, 1)  # stretch
+        target_row.addWidget(self.path_input, 1)
 
-        # Browse: secondary prominence (HIG: opens a dialog → trailing ellipsis)
-        browse_btn = QPushButton("Browse...")
-        browse_btn.setStyleSheet(self.STYLE_SECONDARY)
-        browse_btn.clicked.connect(self.select_directory)
-        target_row.addWidget(browse_btn)
+        self._browse_btn = QPushButton(t("btn_browse"))
+        self._browse_btn.setStyleSheet(self.STYLE_SECONDARY)
+        self._browse_btn.clicked.connect(self.select_directory)
+        target_row.addWidget(self._browse_btn)
 
         layout.addLayout(target_row)
 
         # ============================================================
-        # ROW 2 — Analysis controls (HIG: primary action most prominent)
+        # ROW 2 — Analysis controls
         # ============================================================
         analysis_row = QHBoxLayout()
         analysis_row.setSpacing(8)
 
-        sens_label = QLabel("Sensitivity:")
-        sens_label.setStyleSheet("color: #7f8c8d;")
-        analysis_row.addWidget(sens_label)
+        self._sens_label = QLabel(t("label_sensitivity"))
+        self._sens_label.setStyleSheet("color: #7f8c8d;")
+        analysis_row.addWidget(self._sens_label)
 
+        # Sensitivity combo: internal values are always English, display is translated
+        self._sens_keys = ["Strict", "Balanced", "Fuzzy"]
         self.sens_combo = QComboBox()
-        self.sens_combo.addItems(["Strict", "Balanced", "Fuzzy"])
-        self.sens_combo.setCurrentText("Balanced")
-        self.sens_combo.setToolTip(
-            "Strict = exact match (SHA-256)\n"
-            "Balanced = fast near-exact (head+tail)\n"
-            "Fuzzy = similar content (SimHash)"
-        )
+        self.sens_combo.addItems([t("combo_strict"), t("combo_balanced"), t("combo_fuzzy")])
+        self.sens_combo.setCurrentIndex(1)  # Balanced
+        self.sens_combo.setToolTip(t("tooltip_sensitivity"))
         self.sens_combo.setStyleSheet("padding: 4px 8px;")
         self.sens_combo.currentIndexChanged.connect(self.clear_all_data)
         analysis_row.addWidget(self.sens_combo)
 
         analysis_row.addStretch()
 
-        # Analyze: PRIMARY action — largest, filled accent (HIG: hierarchy through style)
-        scan_btn = QPushButton("Analyze")
-        scan_btn.setStyleSheet(self.STYLE_PRIMARY)
-        scan_btn.clicked.connect(self.start_scan)
-        analysis_row.addWidget(scan_btn)
+        self._scan_btn = QPushButton(t("btn_analyze"))
+        self._scan_btn.setStyleSheet(self.STYLE_PRIMARY)
+        self._scan_btn.clicked.connect(self.start_scan)
+        analysis_row.addWidget(self._scan_btn)
 
         layout.addLayout(analysis_row)
 
@@ -614,31 +614,25 @@ class ForensicVisualInspector(QMainWindow):
         layout.addWidget(self.progress_bar)
 
         # ============================================================
-        # ROW 4 — Global actions (HIG: secondary toolbar, grouped by domain)
+        # ROW 4 — Global actions
         # ============================================================
         global_row = QHBoxLayout()
         global_row.setSpacing(8)
 
-        # Auto-clean: accent action (HIG: specific verb label)
-        self.auto_wizard_btn = QPushButton("Auto-clean duplicates")
+        self.auto_wizard_btn = QPushButton(t("btn_auto_clean"))
         self.auto_wizard_btn.setStyleSheet(self.STYLE_ACCENT)
-        self.auto_wizard_btn.setToolTip(
-            "Automatically move redundant copies to quarantine.\n"
-            "Keeps the file with the shortest, cleanest path."
-        )
+        self.auto_wizard_btn.setToolTip(t("tooltip_auto_clean"))
         self.auto_wizard_btn.clicked.connect(self.smart_auto_clean)
         global_row.addWidget(self.auto_wizard_btn)
 
         global_row.addStretch()
 
-        # Quarantine group (HIG: consistent grouping of related actions)
-        self.open_q_btn = QPushButton("Open quarantine folder")
+        self.open_q_btn = QPushButton(t("btn_open_quarantine"))
         self.open_q_btn.setStyleSheet(self.STYLE_FLAT)
         self.open_q_btn.clicked.connect(self.open_quarantine_folder)
         global_row.addWidget(self.open_q_btn)
 
-        # Empty quarantine: destructive (HIG: "Empty Trash" pattern)
-        self.purge_q_btn = QPushButton("Empty quarantine")
+        self.purge_q_btn = QPushButton(t("btn_empty_quarantine"))
         self.purge_q_btn.setStyleSheet(self.STYLE_DESTRUCTIVE)
         self.purge_q_btn.clicked.connect(self.purge_quarantine)
         global_row.addWidget(self.purge_q_btn)
@@ -646,7 +640,7 @@ class ForensicVisualInspector(QMainWindow):
         layout.addLayout(global_row)
 
         # ============================================================
-        # MAIN CONTENT — Split view (HIG: sidebar + detail pattern)
+        # MAIN CONTENT — Split view
         # ============================================================
         self.main_splitter = QSplitter(Qt.Vertical)
         layout.addWidget(self.main_splitter, 1)
@@ -654,53 +648,49 @@ class ForensicVisualInspector(QMainWindow):
         self.top_splitter = QSplitter(Qt.Horizontal)
         self.main_splitter.addWidget(self.top_splitter)
 
-        # Left: Folder tree (HIG: outline/tree view for hierarchy)
         self.folder_tree = QTreeWidget()
-        self.folder_tree.setHeaderLabels(["Folder", "Files", "Dupes", "Size"])
+        self.folder_tree.setHeaderLabels([
+            t("tree_folder"), t("tree_files"), t("tree_dupes"), t("tree_size")
+        ])
         self.folder_tree.setSortingEnabled(True)
         self.folder_tree.itemClicked.connect(self.on_folder_click)
         self.top_splitter.addWidget(self.folder_tree)
 
-        # Right: File panel with contextual action bar
         file_panel = QWidget()
         file_panel_layout = QVBoxLayout(file_panel)
         file_panel_layout.setContentsMargins(0, 0, 0, 0)
         file_panel_layout.setSpacing(3)
 
-        # Contextual actions (HIG: controls near the data they affect)
         file_actions = QHBoxLayout()
         file_actions.setSpacing(6)
 
-        # Selection: flat/tertiary (HIG: non-destructive = low visual weight)
-        self.check_btn = QPushButton("Select duplicates")
+        self.check_btn = QPushButton(t("btn_select_duplicates"))
         self.check_btn.setStyleSheet(self.STYLE_FLAT)
-        self.check_btn.setToolTip("Select all duplicate copies (keeps originals unselected)")
+        self.check_btn.setToolTip(t("tooltip_select_duplicates"))
         self.check_btn.clicked.connect(self.check_all_duplicates)
         file_actions.addWidget(self.check_btn)
 
-        self.uncheck_btn = QPushButton("Deselect all")
+        self.uncheck_btn = QPushButton(t("btn_deselect_all"))
         self.uncheck_btn.setStyleSheet(self.STYLE_FLAT)
         self.uncheck_btn.clicked.connect(self.uncheck_all)
         file_actions.addWidget(self.uncheck_btn)
 
         file_actions.addStretch()
 
-        # Destructive: warning/danger (HIG: destructive style, right-aligned)
-        self.move_checked_btn = QPushButton("Quarantine selected")
+        self.move_checked_btn = QPushButton(t("btn_quarantine_selected"))
         self.move_checked_btn.setStyleSheet(self.STYLE_WARNING)
         self.move_checked_btn.clicked.connect(self.quarantine_checked)
         file_actions.addWidget(self.move_checked_btn)
 
-        self.delete_checked_btn = QPushButton("Delete selected")
+        self.delete_checked_btn = QPushButton(t("btn_delete_selected"))
         self.delete_checked_btn.setStyleSheet(self.STYLE_DESTRUCTIVE)
         self.delete_checked_btn.clicked.connect(self.delete_checked)
         file_actions.addWidget(self.delete_checked_btn)
 
         file_panel_layout.addLayout(file_actions)
 
-        # File tree
         self.file_tree = QTreeWidget()
-        self.file_tree.setHeaderLabels(["", "Filename", "Size", "Verdict"])
+        self.file_tree.setHeaderLabels(["", t("tree_filename"), t("tree_size"), t("tree_verdict")])
         self.file_tree.setColumnWidth(0, 40)
         self.file_tree.setSortingEnabled(True)
         self.file_tree.itemClicked.connect(self.on_file_click)
@@ -711,7 +701,7 @@ class ForensicVisualInspector(QMainWindow):
         self.top_splitter.addWidget(file_panel)
 
         # ============================================================
-        # BOTTOM — Forensic Lab (HIG: detail panel for comparison)
+        # BOTTOM — Comparison panel
         # ============================================================
         self.lab_frame = QFrame()
         self.lab_frame.setFrameShape(QFrame.StyledPanel)
@@ -719,9 +709,9 @@ class ForensicVisualInspector(QMainWindow):
         self.lab_layout.setContentsMargins(6, 4, 6, 4)
         self.main_splitter.addWidget(self.lab_frame)
 
-        lab_header = QLabel("Comparison")
-        lab_header.setStyleSheet("font-weight: bold; color: #2c3e50; font-size: 12px;")
-        self.lab_layout.addWidget(lab_header)
+        self._lab_header = QLabel(t("label_comparison"))
+        self._lab_header.setStyleSheet("font-weight: bold; color: #2c3e50; font-size: 12px;")
+        self.lab_layout.addWidget(self._lab_header)
 
         self.lab_splitter = QSplitter(Qt.Horizontal)
         self.lab_layout.addWidget(self.lab_splitter, 1)
@@ -739,82 +729,97 @@ class ForensicVisualInspector(QMainWindow):
         self.status_bar.addPermanentWidget(self.waste_donut)
 
         # ============================================================
-        # MENU BAR — Help (HIG: redundant access paths for key info)
+        # MENU BAR
         # ============================================================
         menu_bar = self.menuBar()
-        help_menu = menu_bar.addMenu("Help")
 
-        how_it_works = QAction("How it works", self)
-        how_it_works.triggered.connect(self.show_how_it_works)
-        help_menu.addAction(how_it_works)
+        # Language menu
+        self._lang_menu = menu_bar.addMenu(t("menu_language"))
+        for code, name in LANGUAGES.items():
+            act = QAction(name, self)
+            act.setData(code)
+            act.triggered.connect(self._on_language_changed)
+            self._lang_menu.addAction(act)
 
-        about_act = QAction("About", self)
-        about_act.triggered.connect(self.show_about)
-        help_menu.addAction(about_act)
+        # Help menu
+        self._help_menu = menu_bar.addMenu(t("menu_help"))
+
+        self._how_it_works_act = QAction(t("menu_how_it_works"), self)
+        self._how_it_works_act.triggered.connect(self.show_how_it_works)
+        self._help_menu.addAction(self._how_it_works_act)
+
+        self._about_act = QAction(t("menu_about"), self)
+        self._about_act.triggered.connect(self.show_about)
+        self._help_menu.addAction(self._about_act)
+
+    # --- Language switching ---
+
+    def _on_language_changed(self):
+        action = self.sender()
+        lang = action.data()
+        if lang == self._lang:
+            return
+        self._lang = lang
+        self.tr_fn = get_translator(lang)
+        # RTL support
+        if lang in RTL_LANGUAGES:
+            self.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
+        self._retranslate_ui()
+
+    def _retranslate_ui(self):
+        t = self.tr_fn
+        self.setWindowTitle(t("window_title"))
+        # Row 1
+        self._target_label.setText(t("label_target"))
+        self.path_input.setPlaceholderText(t("placeholder_select_directory"))
+        self._browse_btn.setText(t("btn_browse"))
+        # Row 2
+        self._sens_label.setText(t("label_sensitivity"))
+        idx = self.sens_combo.currentIndex()
+        self.sens_combo.blockSignals(True)
+        self.sens_combo.clear()
+        self.sens_combo.addItems([t("combo_strict"), t("combo_balanced"), t("combo_fuzzy")])
+        self.sens_combo.setCurrentIndex(idx)
+        self.sens_combo.blockSignals(False)
+        self.sens_combo.setToolTip(t("tooltip_sensitivity"))
+        self._scan_btn.setText(t("btn_analyze"))
+        # Row 4
+        self.auto_wizard_btn.setText(t("btn_auto_clean"))
+        self.auto_wizard_btn.setToolTip(t("tooltip_auto_clean"))
+        self.open_q_btn.setText(t("btn_open_quarantine"))
+        self.purge_q_btn.setText(t("btn_empty_quarantine"))
+        # Folder tree
+        self.folder_tree.setHeaderLabels([
+            t("tree_folder"), t("tree_files"), t("tree_dupes"), t("tree_size")
+        ])
+        # File panel
+        self.check_btn.setText(t("btn_select_duplicates"))
+        self.check_btn.setToolTip(t("tooltip_select_duplicates"))
+        self.uncheck_btn.setText(t("btn_deselect_all"))
+        self.move_checked_btn.setText(t("btn_quarantine_selected"))
+        self.delete_checked_btn.setText(t("btn_delete_selected"))
+        self.file_tree.setHeaderLabels(["", t("tree_filename"), t("tree_size"), t("tree_verdict")])
+        # Comparison
+        self._lab_header.setText(t("label_comparison"))
+        # Menus
+        self._lang_menu.setTitle(t("menu_language"))
+        self._help_menu.setTitle(t("menu_help"))
+        self._how_it_works_act.setText(t("menu_how_it_works"))
+        self._about_act.setText(t("menu_about"))
+        # Waste donut
+        self.waste_donut.setToolTip(t("tooltip_waste_donut"))
 
     # --- Help dialogs ---
 
     def show_how_it_works(self):
-        QMessageBox.information(self, "How it works", (
-            "<h3>Quick start</h3>"
-            "<ol>"
-            "<li><b>Set a target directory</b> — type a path or click <i>Browse...</i></li>"
-            "<li><b>Pick a sensitivity mode:</b><br>"
-            "&nbsp;&nbsp;Strict — exact match (SHA-256, zero false positives)<br>"
-            "&nbsp;&nbsp;Balanced — fast near-exact (compares head + tail bytes)<br>"
-            "&nbsp;&nbsp;Fuzzy — finds similar content (~85%+ overlap)</li>"
-            "<li><b>Click Analyze</b> — the scan runs in the background</li>"
-            "<li><b>Click a folder</b> on the left to see its files on the right</li>"
-            "<li><b>Click a file</b> to compare it with its duplicate in the bottom panel</li>"
-            "<li><b>Clean up:</b> select duplicates, then quarantine or delete them</li>"
-            "</ol>"
-            "<h3>Detection pipeline</h3>"
-            "<p><b>Strict &amp; Balanced</b> use a progressive pipeline:<br>"
-            "file size → first 4 KB → last 4 KB → full SHA-256 (Strict only).<br>"
-            "Each stage eliminates non-candidates before reading more data.</p>"
-            "<p><b>Fuzzy</b> tokenizes text (or uses byte n-grams for binary files), "
-            "computes a 64-bit SimHash, and splits it into 8 LSH bands. "
-            "Files sharing any band are flagged as similar.</p>"
-            "<h3>Quarantine</h3>"
-            "<p>Files are never deleted directly — they are first moved to a "
-            "<code>_FORENSIC_QUARANTINE</code> folder inside the target directory. "
-            "You can review them, restore them manually, or use <i>Empty quarantine</i> "
-            "to permanently delete them.</p>"
-            "<h3>Auto-clean</h3>"
-            "<p>The auto-clean wizard picks which copy to keep using heuristics: "
-            "shortest path, absence of keywords like 'copy' or 'backup', "
-            "and most recent modification time as a tiebreaker. "
-            "All other copies are moved to quarantine.</p>"
-            "<h3>Safety &amp; disclaimer</h3>"
-            "<p><b>Back up your data before using this tool.</b> While multiple "
-            "safeguards are in place — confirmation dialogs, quarantine step before "
-            "deletion, and no files are ever deleted without explicit user action — "
-            "no software is infallible.</p>"
-            "<p>Deleted files may still be recoverable from your operating system's "
-            "trash/recycle bin depending on your platform and configuration.</p>"
-            "<p>This software is provided as-is, without warranty of any kind. "
-            "The authors are not liable for any data loss. "
-            "<b>You use this tool entirely at your own risk.</b></p>"
-        ))
+        t = self.tr_fn
+        QMessageBox.information(self, t("menu_how_it_works"), t("help_how_it_works"))
 
     def show_about(self):
-        QMessageBox.about(self, "About", (
-            "<h3>DedupGenie</h3>"
-            "<p>Version 1.0.0</p>"
-            "<p>Duplicate file finder with forensic-grade detection.</p>"
-            "<p>Algorithms: SHA-256, progressive head/tail pipeline, "
-            "SimHash + LSH banding.</p>"
-            "<p>Built with Python and PyQt5.</p>"
-            "<hr>"
-            "<p><b>Install:</b> <code>pip install dedupgenie</code><br>"
-            "<b>Run:</b> <code>dedupgenie</code><br>"
-            "<b>PyPI:</b> <a href='https://pypi.org/project/dedupgenie/'>pypi.org/project/dedupgenie</a><br>"
-            "<b>GitHub:</b> <a href='https://github.com/lemarcgagnon/DuplicateFinder'>github.com/lemarcgagnon/DuplicateFinder</a></p>"
-            "<hr>"
-            "<p>Created by <b>Marc Gagnon</b> "
-            "(<a href='https://marcgagnon.ca'>marcgagnon.ca</a>)<br>"
-            "with <b>Gemini</b> and <b>Claude</b>.</p>"
-        ))
+        t = self.tr_fn
+        QMessageBox.about(self, t("menu_about"), t("help_about"))
 
     # --- Core actions ---
 
@@ -827,24 +832,33 @@ class ForensicVisualInspector(QMainWindow):
         self.diff_left.clear()
         self.diff_right.clear()
         self.waste_donut.set_data(0, 0)
-        self.status_bar.showMessage("Settings changed — re-analyze to update.")
+        self.status_bar.showMessage(self.tr_fn("status_settings_changed"))
 
     def select_directory(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Directory", self.path_input.text())
+        path = QFileDialog.getExistingDirectory(
+            self, self.tr_fn("dialog_file_select"), self.path_input.text()
+        )
         if path:
             self.path_input.setText(os.path.abspath(path))
+
+    def _get_sensitivity_key(self):
+        """Map current combo index back to the internal English key."""
+        return self._sens_keys[self.sens_combo.currentIndex()]
 
     def start_scan(self):
         target = self.path_input.text()
         if not os.path.isdir(target):
-            QMessageBox.warning(self, "Invalid path", f"Directory not found:\n{target}")
+            QMessageBox.warning(
+                self, self.tr_fn("dialog_invalid_path"),
+                self.tr_fn("msg_invalid_path", path=target)
+            )
             return
         self.folder_tree.clear()
         self.file_tree.clear()
         self.diff_left.clear()
         self.diff_right.clear()
         self.progress_bar.setVisible(True)
-        self.worker = ScanWorker(target, self.sens_combo.currentText())
+        self.worker = ScanWorker(target, self._get_sensitivity_key())
         self.worker.progress.connect(self._on_scan_progress)
         self.worker.finished.connect(self._on_scan_finished)
         self.worker.start()
@@ -868,7 +882,7 @@ class ForensicVisualInspector(QMainWindow):
             )
             if "_FORENSIC_QUARANTINE" in folder:
                 item.setForeground(0, QColor("#d35400"))
-                item.setText(0, "QUARANTINE")
+                item.setText(0, self.tr_fn("status_quarantine_label"))
             elif s["dupes"] > 0:
                 item.setForeground(2, QColor("#e67e22"))
             self.folder_tree.addTopLevelItem(item)
@@ -892,16 +906,17 @@ class ForensicVisualInspector(QMainWindow):
 
         self.waste_donut.set_data(total_size, waste_bytes)
         waste_str = WasteDonut._fmt(waste_bytes)
-        self.status_bar.showMessage(
-            f"Done: {total_files} files, {dupe_groups} duplicate groups, "
-            f"{dupe_files} redundant copies — {waste_str} wasted."
-        )
+        self.status_bar.showMessage(self.tr_fn(
+            "status_scan_complete",
+            total_files=total_files, dupe_groups=dupe_groups,
+            dupe_files=dupe_files, waste_str=waste_str
+        ))
 
     # --- Folder / file tree ---
 
     def on_folder_click(self, item):
         folder_rel = item.text(0)
-        if folder_rel == "QUARANTINE":
+        if folder_rel == self.tr_fn("status_quarantine_label"):
             folder_rel = "_FORENSIC_QUARANTINE"
         base = self.path_input.text()
         if folder_rel == os.path.basename(base):
@@ -939,12 +954,13 @@ class ForensicVisualInspector(QMainWindow):
         is_q = "_FORENSIC_QUARANTINE" in path
         dupes = [] if is_q else self._get_dupes_for(path)
 
+        t = self.tr_fn
         if is_q:
-            status = "QUARANTINED"
+            status = t("status_quarantined")
         elif dupes:
-            status = f"MATCH ({len(dupes) + 1})"
+            status = t("status_match", count=len(dupes) + 1)
         else:
-            status = "Unique"
+            status = t("status_unique")
 
         size_kb = record.size / 1024
         size_str = f"{size_kb:.1f} KB" if size_kb < 1024 else f"{size_kb / 1024:.2f} MB"
@@ -958,7 +974,7 @@ class ForensicVisualInspector(QMainWindow):
             item.setForeground(3, QColor("#e67e22"))
             for op in dupes:
                 rel = os.path.relpath(op, self.path_input.text())
-                child = SortableTreeWidgetItem(["", f"-> {rel}", "-", "Match"])
+                child = SortableTreeWidgetItem(["", f"-> {rel}", "-", t("status_match_child")])
                 child.setCheckState(0, Qt.Unchecked)
                 child.setData(0, Qt.UserRole, op)
                 item.addChild(child)
@@ -971,6 +987,7 @@ class ForensicVisualInspector(QMainWindow):
         path = item.data(0, Qt.UserRole)
         if not path or not os.path.exists(path):
             return
+        t = self.tr_fn
         self.diff_left.clear()
         self.diff_right.clear()
 
@@ -979,8 +996,8 @@ class ForensicVisualInspector(QMainWindow):
         size_a = record_a.size if record_a else 0
 
         self.diff_left.append(
-            f"<b>FILE A:</b> {path}<br>"
-            f"<b>Size:</b> {size_a / 1024:.1f} KB<br>"
+            f"<b>{t('comp_file_a')}</b> {path}<br>"
+            f"<b>{t('comp_size')}</b> {size_a / 1024:.1f} KB<br>"
             f"{'—' * 40}<br>{text_a[:8000]}"
         )
 
@@ -991,12 +1008,10 @@ class ForensicVisualInspector(QMainWindow):
             text_b = self._read_preview(other)
             size_b = record_b.size if record_b else 0
 
-            # Text similarity (SequenceMatcher)
             text_sim = difflib.SequenceMatcher(
                 None, text_a[:3000], text_b[:3000]
             ).ratio() * 100
 
-            # SimHash similarity (if available)
             simhash_info = ""
             if (record_a and record_b
                     and record_a.simhash is not None
@@ -1004,21 +1019,20 @@ class ForensicVisualInspector(QMainWindow):
                 sh_sim = simhash_similarity(record_a.simhash, record_b.simhash) * 100
                 hamming = bin(record_a.simhash ^ record_b.simhash).count('1')
                 simhash_info = (
-                    f"<br><b>SimHash similarity:</b> {sh_sim:.1f}% "
-                    f"(Hamming distance: {hamming}/{SIMHASH_BITS})"
+                    f"<br><b>{t('comp_simhash_sim')}</b> {sh_sim:.1f}% "
+                    f"({t('comp_hamming')} {hamming}/{SIMHASH_BITS})"
                 )
 
-            # Size comparison
             size_info = ""
             if size_a != size_b:
                 diff_kb = abs(size_a - size_b) / 1024
-                size_info = f"<br><b>Size difference:</b> {diff_kb:.1f} KB"
+                size_info = f"<br><b>{t('comp_size_diff')}</b> {diff_kb:.1f} KB"
 
             color = "#27ae60" if text_sim > 95 else "#e67e22" if text_sim > 70 else "#c0392b"
             self.diff_right.append(
-                f"<b>FILE B:</b> {other}<br>"
-                f"<b>Size:</b> {size_b / 1024:.1f} KB{size_info}<br>"
-                f"<b style='color:{color};'>Text similarity: {text_sim:.1f}%</b>"
+                f"<b>{t('comp_file_b')}</b> {other}<br>"
+                f"<b>{t('comp_size')}</b> {size_b / 1024:.1f} KB{size_info}<br>"
+                f"<b style='color:{color};'>{t('comp_text_sim')} {text_sim:.1f}%</b>"
                 f"{simhash_info}<br>"
                 f"{'—' * 40}<br>{text_b[:8000]}"
             )
@@ -1028,11 +1042,12 @@ class ForensicVisualInspector(QMainWindow):
             with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                 return f.read(15000)
         except OSError:
-            return "[Binary or protected file]"
+            return self.tr_fn("comp_binary")
 
     # --- Bulk actions ---
 
     def check_all_duplicates(self):
+        t = self.tr_fn
         root = self.file_tree.invisibleRootItem()
         checked = 0
         for i in range(root.childCount()):
@@ -1041,9 +1056,9 @@ class ForensicVisualInspector(QMainWindow):
                 item.child(j).setCheckState(0, Qt.Checked)
                 checked += 1
         if checked:
-            self.status_bar.showMessage(f"Checked {checked} duplicate copies.")
+            self.status_bar.showMessage(t("status_checked", count=checked))
         else:
-            self.status_bar.showMessage("No duplicates to check — select a folder first.")
+            self.status_bar.showMessage(t("status_no_dupes_to_check"))
 
     def uncheck_all(self):
         def recurse(item):
@@ -1071,14 +1086,15 @@ class ForensicVisualInspector(QMainWindow):
         open_in_file_manager(q_dir)
 
     def quarantine_checked(self):
+        t = self.tr_fn
         paths = self.get_checked_paths()
         if not paths:
-            self.status_bar.showMessage("Nothing checked.")
+            self.status_bar.showMessage(t("status_nothing_checked"))
             return
         q_dir = os.path.join(self.path_input.text(), "_FORENSIC_QUARANTINE")
         answer = QMessageBox.question(
-            self, "Quarantine",
-            f"Move {len(paths)} checked file(s) to quarantine?"
+            self, t("dialog_quarantine"),
+            t("msg_quarantine_confirm", count=len(paths))
         )
         if answer != QMessageBox.Yes:
             return
@@ -1092,17 +1108,18 @@ class ForensicVisualInspector(QMainWindow):
                 moved += 1
             except OSError as e:
                 log.warning("Failed to quarantine %s: %s", p, e)
-        self.status_bar.showMessage(f"Quarantined {moved}/{len(paths)} files.")
+        self.status_bar.showMessage(t("status_quarantined_files", moved=moved, total=len(paths)))
         self.start_scan()
 
     def delete_checked(self):
+        t = self.tr_fn
         paths = self.get_checked_paths()
         if not paths:
-            self.status_bar.showMessage("Nothing checked.")
+            self.status_bar.showMessage(t("status_nothing_checked"))
             return
         answer = QMessageBox.warning(
-            self, "Permanent Delete",
-            f"PERMANENTLY DELETE {len(paths)} checked file(s)?\nThis cannot be undone.",
+            self, t("dialog_delete"),
+            t("msg_delete_confirm", count=len(paths)),
             QMessageBox.Yes | QMessageBox.No
         )
         if answer != QMessageBox.Yes:
@@ -1114,14 +1131,14 @@ class ForensicVisualInspector(QMainWindow):
                 deleted += 1
             except OSError as e:
                 log.warning("Failed to delete %s: %s", p, e)
-        self.status_bar.showMessage(f"Deleted {deleted}/{len(paths)} files.")
+        self.status_bar.showMessage(t("status_deleted_files", deleted=deleted, total=len(paths)))
         self.start_scan()
 
     def smart_auto_clean(self):
-        """Identify redundant copies using heuristics and move to quarantine."""
+        t = self.tr_fn
         dupe_sets = [list(paths) for paths in self.match_map.values() if len(paths) > 1]
         if not dupe_sets:
-            self.status_bar.showMessage("No duplicates found — run ANALYZE first.")
+            self.status_bar.showMessage(t("status_no_dupes_found"))
             return
 
         already_kept = set()
@@ -1134,18 +1151,15 @@ class ForensicVisualInspector(QMainWindow):
                 if p not in already_kept:
                     to_move.add(p)
 
-        # Don't move a file that was elected keeper in another group
         to_move -= already_kept
 
         if not to_move:
-            self.status_bar.showMessage("No redundant copies to move.")
+            self.status_bar.showMessage(t("status_no_redundant"))
             return
 
         answer = QMessageBox.question(
-            self, "Smart Auto-Wizard",
-            f"The wizard identified {len(to_move)} redundant copies.\n"
-            f"Move them to quarantine?\n\n"
-            f"(Keeps the file with the shortest, cleanest path in each group.)"
+            self, t("dialog_auto_wizard"),
+            t("msg_wizard_confirm", count=len(to_move))
         )
         if answer != QMessageBox.Yes:
             return
@@ -1161,24 +1175,22 @@ class ForensicVisualInspector(QMainWindow):
                 moved += 1
             except OSError as e:
                 log.warning("Wizard failed to move %s: %s", p, e)
-        self.status_bar.showMessage(
-            f"Wizard moved {moved}/{len(to_move)} files to quarantine."
-        )
+        self.status_bar.showMessage(t("status_wizard_moved", moved=moved, total=len(to_move)))
         self.start_scan()
 
     def purge_quarantine(self):
+        t = self.tr_fn
         q_dir = os.path.join(self.path_input.text(), "_FORENSIC_QUARANTINE")
         if not os.path.isdir(q_dir):
-            self.status_bar.showMessage("No quarantine folder found.")
+            self.status_bar.showMessage(t("status_no_quarantine"))
             return
         files = [f for f in os.listdir(q_dir) if os.path.isfile(os.path.join(q_dir, f))]
         if not files:
-            self.status_bar.showMessage("Quarantine is already empty.")
+            self.status_bar.showMessage(t("status_quarantine_empty"))
             return
         answer = QMessageBox.warning(
-            self, "Purge Quarantine",
-            f"PERMANENTLY DELETE all {len(files)} file(s) in quarantine?\n"
-            f"This cannot be undone.",
+            self, t("dialog_purge"),
+            t("msg_purge_confirm", count=len(files)),
             QMessageBox.Yes | QMessageBox.No
         )
         if answer != QMessageBox.Yes:
@@ -1190,9 +1202,7 @@ class ForensicVisualInspector(QMainWindow):
                 deleted += 1
             except OSError as e:
                 log.warning("Purge failed for %s: %s", f, e)
-        self.status_bar.showMessage(
-            f"Purged {deleted}/{len(files)} files from quarantine."
-        )
+        self.status_bar.showMessage(t("status_purged", deleted=deleted, total=len(files)))
         self.start_scan()
 
     # --- Context menu ---
@@ -1205,7 +1215,7 @@ class ForensicVisualInspector(QMainWindow):
         if not path:
             return
         menu = QMenu()
-        open_act = menu.addAction("Open containing folder")
+        open_act = menu.addAction(self.tr_fn("context_open_folder"))
         open_act.triggered.connect(
             lambda: open_in_file_manager(os.path.dirname(path))
         )
