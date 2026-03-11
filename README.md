@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="DedupGenie.svg" alt="DedupGenie" width="180">
+</p>
+
 # DedupGenie
 
 A desktop application that finds and manages duplicate files using forensic-grade detection algorithms. Built with Python and PyQt5.
