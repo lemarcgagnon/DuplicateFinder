@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dedupgenie"
-version = "1.1.0"
-description = "Desktop duplicate file finder with forensic-grade detection (SHA-256, SimHash + LSH)"
+version = "1.2.0"
+description = "Multilingual desktop duplicate file finder with forensic-grade detection (SHA-256, SimHash + LSH)"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
 authors = [
     {name = "Marc Gagnon", email = "marc@marcgagnon.ca"},
 ]
-keywords = ["duplicate", "files", "finder", "dedup", "forensic", "simhash"]
+keywords = ["duplicate", "files", "finder", "dedup", "forensic", "simhash", "multilingual", "i18n"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: X11 Applications :: Qt",
@@ -22,6 +22,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Desktop Environment :: File Managers",
     "Topic :: System :: Filesystems",
+    "Natural Language :: English",
+    "Natural Language :: French",
+    "Natural Language :: German",
+    "Natural Language :: Italian",
+    "Natural Language :: Arabic",
+    "Natural Language :: Portuguese",
 ]
 dependencies = [
     "PyQt5>=5.15",

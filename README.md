@@ -23,6 +23,8 @@ A desktop application that finds and manages duplicate files using forensic-grad
 
 - **Safe quarantine workflow** — Files are moved to a `_FORENSIC_QUARANTINE` folder before permanent deletion. Review, restore, or purge at any time.
 
+- **Multilingual** — Full interface in 6 languages: English, Français, Deutsch, Italiano, العربية, Português. Switch instantly from the Language menu. Arabic includes RTL layout support.
+
 ## Install
 
 Python 3.8+ and pip are required.
@@ -92,6 +94,7 @@ Fuzzy:
 ```
 DedupGenie/
 ├── app.py              # Algorithms, UI, and logic (single-file app)
+├── translations.py     # i18n strings (6 languages)
 ├── pyproject.toml      # Package metadata (pip install)
 ├── setup.py            # Fallback for older pip
 ├── requirements.txt    # Python dependencies (PyQt5)
