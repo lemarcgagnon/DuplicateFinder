@@ -1,4 +1,4 @@
-# Duplicate Finder
+# DedupGenie
 
 A desktop application that finds and manages duplicate files using forensic-grade detection algorithms. Built with Python and PyQt5.
 
@@ -26,16 +26,16 @@ Python 3.8+ and pip are required.
 ### Option 1 — Install with pip (recommended)
 
 ```bash
-pip install git+https://github.com/lemarcgagnon/DuplicateFinder.git
+pip install dedupgenie
 ```
 
 Then run from anywhere:
 
 ```bash
-duplicate-finder
+dedupgenie
 ```
 
-To uninstall: `pip uninstall duplicate-finder`
+To uninstall: `pip uninstall dedupgenie`
 
 ### Option 2 — Download and run directly
 

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name="duplicate-finder",
+    name="dedupgenie",
     version="1.0.0",
     description="Desktop duplicate file finder with forensic-grade detection",
     long_description=open("README.md").read(),
@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.8",
     install_requires=["PyQt5>=5.15"],
     entry_points={
-        "gui_scripts": ["duplicate-finder=app:main"],
+        "gui_scripts": ["dedupgenie=app:main"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
