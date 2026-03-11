@@ -106,6 +106,21 @@ That said, **no software is infallible**. Depending on your operating system and
 
 > **This software is provided "as is", without warranty of any kind, express or implied. The authors are not responsible for any data loss resulting from the use of this tool. You use it entirely at your own risk.**
 
+## Security audit
+
+This codebase has been scanned before publication using industry-standard security tools:
+
+- **[Bandit](https://bandit.readthedocs.io/)** (static analysis for Python) — **0 issues.** Six informational findings related to `subprocess` usage were reviewed and confirmed safe: all calls use list arguments (no shell interpolation) and operate on user-selected paths within the app.
+- **[pip-audit](https://pypi.org/project/pip-audit/)** (dependency vulnerability scanner) — **0 known vulnerabilities** in project dependencies (PyQt5).
+
+You can re-run these audits yourself at any time:
+
+```bash
+pip install bandit pip-audit
+bandit -r app.py
+pip-audit -r requirements.txt
+```
+
 ## Credits
 
 Created by **Marc Gagnon** ([marcgagnon.ca](https://marcgagnon.ca)) with **Gemini** and **Claude**.
